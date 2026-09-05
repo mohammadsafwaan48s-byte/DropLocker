@@ -54,38 +54,54 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Install Capacitor CLI & Core
+      - name: Install Dependencies
         run: |
           npm install
-          npm install @capacitor/core@latest @capacitor/cli@latest @capacitor/android@latest
+          npm install @capacitor/core@latest @capacitor/cli@latest @capacitor/android@latest --save
 
-      - name: Generate Fresh Android Project
+      - name: Initialize Capacitor Android Platform
         run: |
           rm -rf android
-          npx cap add android
-          npx cap sync android
+          npx cap add android 2>&1 || true
+          npx cap sync android 2>&1
+
+      - name: Debug - Check Android Project Files
+        run: |
+          echo "=== Listing android/ ==="
+          ls -la android/ || echo "android/ not found"
+          echo "=== Listing android/app/ ==="
+          ls -la android/app/ || echo "android/app/ not found"
+          echo "=== Checking gradlew ==="
+          ls -la android/gradlew || echo "gradlew not found"
 
       - name: Inject Custom AndroidManifest with Share Sheet
         run: |
-          if [ -f android-template/AndroidManifest.xml ]; then
+          if [ -f android-template/AndroidManifest.xml ] && [ -d android/app/src/main ]; then
             cp -f android-template/AndroidManifest.xml android/app/src/main/AndroidManifest.xml
+            echo "Injected custom AndroidManifest.xml"
+          else
+            echo "Skipping manifest injection"
           fi
 
       - name: Build Debug APK with Gradle
         working-directory: android
         run: |
           chmod +x ./gradlew
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Prepare APK Output
         run: |
           mkdir -p output-apk
           find android/app/build/outputs/apk/ -name "*.apk" -exec cp {} output-apk/DropLocker.apk \;
+          ls -la output-apk/
 
       - name: Upload Android Artifact
         uses: actions/upload-artifact@v4
@@ -116,6 +132,9 @@ jobs:
           name: DropLocker-Android
           path: release-files
 
+      - name: List Release Files
+        run: ls -la release-files/ || echo "No release files"
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -125,8 +144,8 @@ jobs:
             ## 🚀 DropLocker Native Applications
             
             ### 📥 Direct Download Links:
-            - **Windows Laptop:** Download `DropLocker-Setup.exe` or portable `.exe` below.
-            - **Android Phone:** Download `DropLocker.apk` and tap install on your phone.
+            - **Windows Laptop:** Download `DropLocker Setup 1.0.0.exe` below and run it.
+            - **Android Phone:** Download `DropLocker.apk` below and install it.
             
             ### Features:
             - 24/7 Cloud Sync via Cloudflare Workers + KV + D1
