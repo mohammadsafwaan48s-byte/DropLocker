@@ -2,11 +2,21 @@
 
 **DropLocker** is a lightweight, zero-cost, bi-directional cross-device file transfer hub designed to replace sluggish messaging apps for sharing photos, text snippets, and files between your phone and laptop.
 
-Built exclusively on **Cloudflare's Free Tier** with zero egress fees:
-- **Compute:** Cloudflare Workers (100,000 requests/day free)
-- **Object Storage:** Cloudflare R2 (10 GB storage free, zero egress fees)
-- **Metadata Index:** Cloudflare D1 Serverless SQLite (5,000,000 reads/day, 100,000 writes/day free)
-- **PWA & Android Share Sheet:** Installable PWA registered as a native Android Share Target (`POST /share`)
+[![Release](https://img.shields.io/github/v/release/mohammadsafwaan48s-byte/DropLocker?color=blue&label=Latest%20Release)](https://github.com/mohammadsafwaan48s-byte/DropLocker/releases/latest)
+[![Windows](https://img.shields.io/badge/Windows-Download%20.exe-0078D6?logo=windows&logoColor=white)](https://github.com/mohammadsafwaan48s-byte/DropLocker/releases/latest)
+[![Android](https://img.shields.io/badge/Android-Download%20.apk-3DDC84?logo=android&logoColor=white)](https://github.com/mohammadsafwaan48s-byte/DropLocker/releases/latest)
+
+---
+
+### 📥 Download Native Apps
+
+Get DropLocker on your devices from the [Latest GitHub Release](https://github.com/mohammadsafwaan48s-byte/DropLocker/releases/latest):
+
+| Platform | Download | Description |
+| :--- | :--- | :--- |
+| 🪟 **Windows** | [**DropLocker Setup 1.0.0.exe**](https://github.com/mohammadsafwaan48s-byte/DropLocker/releases/latest) | Windows Installer with Tray support & `Ctrl+Shift+V` hotkey |
+| 🪟 **Windows (Portable)** | [**DropLocker 1.0.0.exe**](https://github.com/mohammadsafwaan48s-byte/DropLocker/releases/latest) | Standalone executable (no installation required) |
+| 📱 **Android** | [**DropLocker.apk**](https://github.com/mohammadsafwaan48s-byte/DropLocker/releases/latest) | Native Android App with direct system Share Sheet support |
 
 ---
 
