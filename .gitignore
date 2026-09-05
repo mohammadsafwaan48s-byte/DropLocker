@@ -6,6 +6,13 @@ dist/
 dist-desktop/
 output-apk/
 
+# Android build outputs (keep android/ source committed)
+android/app/build/
+android/.gradle/
+android/build/
+android/.idea/
+android/local.properties
+
 # Logs & Environment
 npm-debug.log*
 yarn-debug.log*
