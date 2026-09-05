@@ -23,20 +23,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
 
-      - name: Install Root & Desktop Dependencies
-        run: |
-          npm install
-          cd desktop
-          npm install
+      - name: Install Desktop Dependencies
+        working-directory: desktop
+        run: npm install
 
       - name: Build Windows Executable
-        run: |
-          cd desktop
-          npx electron-builder --win --publish never
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        working-directory: desktop
+        run: npx electron-builder --win --publish never
 
       - name: Upload Windows Artifact
         uses: actions/upload-artifact@v4
@@ -65,25 +59,26 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install Capacitor & Dependencies
+      - name: Install Capacitor CLI & Core
         run: |
           npm install
-          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npm install @capacitor/core@latest @capacitor/cli@latest @capacitor/android@latest
 
-      - name: Generate Capacitor Android Project
+      - name: Generate Fresh Android Project
         run: |
-          npx cap add android || true
+          rm -rf android
+          npx cap add android
           npx cap sync android
 
-      - name: Preserve Share Target in AndroidManifest
+      - name: Inject Custom AndroidManifest with Share Sheet
         run: |
-          if [ -f android/app/src/main/AndroidManifest.xml ]; then
-            echo "Manifest present"
+          if [ -f android-template/AndroidManifest.xml ]; then
+            cp -f android-template/AndroidManifest.xml android/app/src/main/AndroidManifest.xml
           fi
 
       - name: Build Debug APK with Gradle
+        working-directory: android
         run: |
-          cd android
           chmod +x ./gradlew
           ./gradlew assembleDebug --no-daemon
 
@@ -103,24 +98,26 @@ jobs:
   # =========================================================================
   release:
     needs: [build-windows, build-android]
+    if: always() && (needs.build-windows.result == 'success' || needs.build-android.result == 'success')
     runs-on: ubuntu-latest
     name: Publish Release with Download Links
     steps:
       - name: Download Windows Artifacts
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: DropLocker-Windows
           path: release-files
 
       - name: Download Android Artifact
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: DropLocker-Android
           path: release-files
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         with:
           tag_name: v1.0.0-build-${{ github.run_number }}
           name: DropLocker Apps v1.0.0 (Build #${{ github.run_number }})
