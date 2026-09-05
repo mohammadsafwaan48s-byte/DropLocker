@@ -11,6 +11,14 @@
   let isFetching = false;
   let currentPreviewFile = null;
 
+  const API_BASE = (window.location.protocol.startsWith('http') && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1')
+    ? ''
+    : 'https://droplocker.droplocker-hub.workers.dev';
+
+  function apiUrl(path) {
+    return `${API_BASE}${path}`;
+  }
+
   // DOM Elements
   const passkeyGate = document.getElementById('passkey-gate');
   const passkeyInput = document.getElementById('passkey-input');
@@ -64,7 +72,7 @@
   }
 
   function getDownloadUrl(fileId, forceDownload = false) {
-    const url = `/api/download/${fileId}`;
+    const url = apiUrl(`/api/download/${fileId}`);
     const params = new URLSearchParams();
     if (passkey) params.set('key', passkey);
     if (forceDownload) params.set('download', '1');
@@ -103,7 +111,7 @@
   async function checkAuth() {
     setSyncStatus('syncing', 'Authenticating');
     try {
-      const res = await fetch('/api/auth-check', {
+      const res = await fetch(apiUrl('/api/auth-check'), {
         headers: {
           'Authorization': `Bearer ${passkey}`,
           'X-Passkey': passkey,
@@ -246,7 +254,7 @@
       formData.append('file', file);
 
       const xhr = new XMLHttpRequest();
-      xhr.open('POST', '/api/upload', true);
+      xhr.open('POST', apiUrl('/api/upload'), true);
       xhr.setRequestHeader('Authorization', `Bearer ${passkey}`);
       xhr.setRequestHeader('X-Passkey', passkey);
 
@@ -313,7 +321,7 @@
     setSyncStatus('syncing', 'Syncing');
 
     try {
-      const res = await fetch('/api/files', {
+      const res = await fetch(apiUrl('/api/files'), {
         headers: {
           'Authorization': `Bearer ${passkey}`,
           'X-Passkey': passkey,
@@ -447,7 +455,7 @@
   window.DropLocker = {
     async togglePin(fileId, currentPinned) {
       try {
-        const res = await fetch(`/api/files/${fileId}/pin`, {
+        const res = await fetch(apiUrl(`/api/files/${fileId}/pin`), {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
@@ -476,7 +484,7 @@
       }
 
       try {
-        const res = await fetch(`/api/files/${fileId}`, {
+        const res = await fetch(apiUrl(`/api/files/${fileId}`), {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${passkey}`,
@@ -553,7 +561,8 @@
         }
 
         // Fallback: Copy direct shareable URL
-        const fullUrl = `${window.location.origin}${downloadUrl}`;
+        const host = (window.location.protocol.startsWith('http') && !window.location.hostname.includes('localhost')) ? window.location.origin : 'https://droplocker.droplocker-hub.workers.dev';
+        const fullUrl = `${host}${downloadUrl}`;
         await navigator.clipboard.writeText(fullUrl);
         showToast('Link copied to clipboard!', 'success');
       } catch (err) {
