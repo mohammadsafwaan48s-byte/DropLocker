@@ -1,0 +1,34 @@
+{
+  "name": "droplocker-desktop",
+  "version": "1.0.0",
+  "description": "DropLocker Windows Native Desktop Hub",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder --win"
+  },
+  "build": {
+    "appId": "com.droplocker.desktop",
+    "productName": "DropLocker",
+    "win": {
+      "target": ["nsis", "portable"],
+      "icon": "../public/icon-512.png"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "DropLocker"
+    },
+    "directories": {
+      "output": "../dist-desktop"
+    }
+  },
+  "devDependencies": {
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8"
+  }
+}

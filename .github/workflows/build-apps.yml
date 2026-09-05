@@ -1,0 +1,136 @@
+name: Build DropLocker Apps (Windows .exe & Android .apk)
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  # =========================================================================
+  # 1. Build Windows Desktop App (.exe)
+  # =========================================================================
+  build-windows:
+    runs-on: windows-latest
+    name: Build Windows .exe
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Desktop Dependencies
+        run: |
+          cd desktop
+          npm install
+
+      - name: Build Windows Executable
+        run: |
+          cd desktop
+          npm run dist
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Windows Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DropLocker-Windows
+          path: dist-desktop/*.exe
+
+  # =========================================================================
+  # 2. Build Android Native App (.apk)
+  # =========================================================================
+  build-android:
+    runs-on: ubuntu-latest
+    name: Build Android .apk
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Dependencies & Capacitor CLI
+        run: |
+          npm install
+          npm install -g @capacitor/cli @capacitor/core @capacitor/android
+
+      - name: Initialize Android Project
+        run: |
+          npx cap add android || true
+          npx cap sync android
+
+      - name: Inject Share Target Intent into AndroidManifest
+        run: |
+          cp android/app/src/main/AndroidManifest.xml android/app/src/main/AndroidManifest.xml.bak || true
+
+      - name: Build Debug APK with Gradle
+        run: |
+          cd android
+          chmod +x ./gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Rename & Prepare APK
+        run: |
+          mkdir -p output-apk
+          find android/app/build/outputs/apk/ -name "*.apk" -exec cp {} output-apk/DropLocker.apk \;
+
+      - name: Upload Android Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DropLocker-Android
+          path: output-apk/DropLocker.apk
+
+  # =========================================================================
+  # 3. Create GitHub Release with 2 Direct Download Links
+  # =========================================================================
+  release:
+    needs: [build-windows, build-android]
+    runs-on: ubuntu-latest
+    name: Publish Release with Download Links
+    steps:
+      - name: Download Windows Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: DropLocker-Windows
+          path: release-files
+
+      - name: Download Android Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: DropLocker-Android
+          path: release-files
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        with:
+          tag_name: v1.0.0-${{ github.run_number }}
+          name: DropLocker Release v1.0.0 (Build ${{ github.run_number }})
+          body: |
+            ## 🚀 DropLocker Native Applications
+            
+            ### 📥 Direct Download Links:
+            - **Laptop (Windows):** Download the `.exe` installer or portable executable below.
+            - **Phone (Android):** Download `DropLocker.apk` and tap install on your phone.
+            
+            ### Features:
+            - 24/7 cloud sync via Cloudflare R2 + Workers
+            - Windows System Tray + Global `Ctrl+Shift+V` Hotkey
+            - Android Native Share Sheet integration
+          files: release-files/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

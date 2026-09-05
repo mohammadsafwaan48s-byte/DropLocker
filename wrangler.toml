@@ -1,0 +1,24 @@
+name = "droplocker"
+main = "src/worker.ts"
+compatibility_date = "2024-09-25"
+compatibility_flags = ["nodejs_compat"]
+
+# Static Assets served from the ./public directory
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+# Cloudflare KV Namespace Binding (100% Free, Zero Card Required)
+[[kv_namespaces]]
+binding = "KV"
+id = "b1e8a73c9461406db6e639174aceafa4"
+
+# Cloudflare D1 Database Binding (Serverless SQLite)
+[[d1_databases]]
+binding = "DB"
+database_name = "droplocker-db"
+database_id = "63d58ca7-125d-4b28-9025-9689ccf4e02b"
+
+# Cron Trigger for Auto-Cleanup (Runs at minute 0 every hour)
+[triggers]
+crons = ["0 * * * *"]
