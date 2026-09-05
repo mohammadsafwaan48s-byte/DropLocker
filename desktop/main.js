@@ -35,7 +35,16 @@ function saveConfig(cfg) {
 
 const config = loadConfig();
 
+function getAssetPath(...relativePaths) {
+  const packagedPath = path.join(__dirname, ...relativePaths);
+  if (fs.existsSync(packagedPath)) {
+    return packagedPath;
+  }
+  return path.join(__dirname, '..', ...relativePaths);
+}
+
 function createWindow() {
+  const iconPath = getAssetPath('public', 'icon-512.png');
   mainWindow = new BrowserWindow({
     width: 1080,
     height: 750,
@@ -43,7 +52,7 @@ function createWindow() {
     minHeight: 500,
     title: 'DropLocker',
     backgroundColor: '#0a0a0f',
-    icon: path.join(__dirname, '..', 'public', 'icon-512.png'),
+    icon: iconPath,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -53,8 +62,10 @@ function createWindow() {
   });
 
   // Load public/index.html
-  const indexPath = path.join(__dirname, '..', 'public', 'index.html');
-  mainWindow.loadFile(indexPath);
+  const indexPath = getAssetPath('public', 'index.html');
+  mainWindow.loadFile(indexPath).catch(err => {
+    console.error('Failed to load index.html:', err);
+  });
 
   // When closing, minimize to tray instead of quitting
   mainWindow.on('close', (event) => {
@@ -72,7 +83,7 @@ function createWindow() {
 }
 
 function createTray() {
-  const iconPath = path.join(__dirname, '..', 'public', 'icon-192.png');
+  const iconPath = getAssetPath('public', 'icon-192.png');
   tray = new Tray(iconPath);
   tray.setToolTip('DropLocker — Cross-Device Hub');
 
@@ -110,7 +121,7 @@ function showNotification(title, body) {
     new Notification({
       title,
       body,
-      icon: path.join(__dirname, '..', 'public', 'icon-192.png'),
+      icon: getAssetPath('public', 'icon-192.png'),
     }).show();
   }
 }

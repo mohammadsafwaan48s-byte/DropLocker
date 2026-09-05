@@ -26,7 +26,15 @@
     },
     "directories": {
       "output": "../dist-desktop"
-    }
+    },
+    "files": [
+      "**/*",
+      {
+        "from": "../public",
+        "to": "public",
+        "filter": ["**/*"]
+      }
+    ]
   },
   "devDependencies": {
     "electron": "^33.4.11",
