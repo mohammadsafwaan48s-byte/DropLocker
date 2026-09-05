@@ -2,11 +2,12 @@
   "name": "droplocker-desktop",
   "version": "1.0.0",
   "description": "DropLocker Windows Native Desktop Hub",
+  "author": "DropLocker",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder --win"
+    "dist": "electron-builder --win --publish never"
   },
   "build": {
     "appId": "com.droplocker.desktop",
@@ -28,7 +29,7 @@
     }
   },
   "devDependencies": {
-    "electron": "^33.2.1",
+    "electron": "^33.4.11",
     "electron-builder": "^25.1.8"
   }
 }

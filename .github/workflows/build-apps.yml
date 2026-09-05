@@ -23,16 +23,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
 
-      - name: Install Desktop Dependencies
+      - name: Install Root & Desktop Dependencies
         run: |
+          npm install
           cd desktop
           npm install
 
       - name: Build Windows Executable
         run: |
           cd desktop
-          npm run dist
+          npx electron-builder --win --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -63,19 +65,21 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install Dependencies & Capacitor CLI
+      - name: Install Capacitor & Dependencies
         run: |
           npm install
-          npm install -g @capacitor/cli @capacitor/core @capacitor/android
+          npm install @capacitor/core @capacitor/cli @capacitor/android
 
-      - name: Initialize Android Project
+      - name: Generate Capacitor Android Project
         run: |
           npx cap add android || true
           npx cap sync android
 
-      - name: Inject Share Target Intent into AndroidManifest
+      - name: Preserve Share Target in AndroidManifest
         run: |
-          cp android/app/src/main/AndroidManifest.xml android/app/src/main/AndroidManifest.xml.bak || true
+          if [ -f android/app/src/main/AndroidManifest.xml ]; then
+            echo "Manifest present"
+          fi
 
       - name: Build Debug APK with Gradle
         run: |
@@ -83,7 +87,7 @@ jobs:
           chmod +x ./gradlew
           ./gradlew assembleDebug --no-daemon
 
-      - name: Rename & Prepare APK
+      - name: Prepare APK Output
         run: |
           mkdir -p output-apk
           find android/app/build/outputs/apk/ -name "*.apk" -exec cp {} output-apk/DropLocker.apk \;
@@ -116,21 +120,21 @@ jobs:
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         with:
-          tag_name: v1.0.0-${{ github.run_number }}
-          name: DropLocker Release v1.0.0 (Build ${{ github.run_number }})
+          tag_name: v1.0.0-build-${{ github.run_number }}
+          name: DropLocker Apps v1.0.0 (Build #${{ github.run_number }})
           body: |
             ## 🚀 DropLocker Native Applications
             
             ### 📥 Direct Download Links:
-            - **Laptop (Windows):** Download the `.exe` installer or portable executable below.
-            - **Phone (Android):** Download `DropLocker.apk` and tap install on your phone.
+            - **Windows Laptop:** Download `DropLocker-Setup.exe` or portable `.exe` below.
+            - **Android Phone:** Download `DropLocker.apk` and tap install on your phone.
             
             ### Features:
-            - 24/7 cloud sync via Cloudflare R2 + Workers
+            - 24/7 Cloud Sync via Cloudflare Workers + KV + D1
             - Windows System Tray + Global `Ctrl+Shift+V` Hotkey
-            - Android Native Share Sheet integration
+            - Native Android Share Sheet Integration
           files: release-files/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
