@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0a0a0f" />
+  <meta name="description" content="DropLocker - Zero-Cost Bi-Directional Cross-Device File Transfer Hub" />
+  
+  <!-- Apple Touch & PWA Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="DropLocker" />
+  <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
+  <link rel="manifest" href="/manifest.json" />
+
+  <title>DropLocker — Cross-Device Hub</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+
+  <!-- Hidden File Input for Native Picker -->
+  <input type="file" id="file-input" multiple style="display: none;" />
+
+  <!-- Passkey Gate (Visible if not authenticated) -->
+  <div id="passkey-gate" class="passkey-gate hidden">
+    <div class="passkey-card">
+      <div class="passkey-icon">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+      </div>
+      <h1 class="passkey-title">DropLocker</h1>
+      <p class="passkey-desc">Enter your passkey to access your personal hub across devices.</p>
+      
+      <form id="passkey-form" onsubmit="return false;">
+        <input 
+          type="password" 
+          id="passkey-input" 
+          class="passkey-input" 
+          placeholder="••••••••" 
+          autocomplete="current-password"
+          required 
+        />
+        <button type="submit" id="passkey-submit-btn" class="btn btn-primary" style="width: 100%;">
+          Unlock Locker
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Fullscreen Drag & Drop Overlay -->
+  <div id="fullscreen-dropzone" class="fullscreen-dropzone">
+    <div class="dropzone-inner">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+      </svg>
+      <h2>Drop to Transfer</h2>
+      <p>Instant encrypted sync to all connected devices</p>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="container header-content">
+      <a href="/" class="brand-section">
+        <div class="brand-icon">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+          </svg>
+        </div>
+        <span class="brand-title">DropLocker</span>
+      </a>
+
+      <div class="header-actions">
+        <!-- Live Status Pill -->
+        <div class="status-pill" id="sync-status" title="Real-time status">
+          <span class="status-dot" id="status-dot"></span>
+          <span id="status-label">Ready</span>
+        </div>
+
+        <!-- Lock / Passkey Button -->
+        <button class="btn-icon-only" id="settings-btn" title="Passkey Settings">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="width:18px;height:18px;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+          </svg>
+        </button>
+
+        <!-- Upload File Button -->
+        <button class="btn btn-primary" id="select-files-btn">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" style="width:16px;height:16px;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>Send File</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <main class="container" style="flex: 1;">
+    
+    <!-- Hero Dock -->
+    <section class="hero-dock">
+      <div class="dock-header">
+        <div>
+          <h2 class="dock-title">Cross-Device Transfer</h2>
+          <p class="dock-subtitle">Paste anything (Ctrl+V), share from mobile, or drop files below</p>
+        </div>
+      </div>
+
+      <!-- Quick Text Snippet / Note Sender -->
+      <div class="dock-inputs">
+        <div class="text-snippet-box">
+          <input 
+            type="text" 
+            id="quick-note-input" 
+            class="snippet-input" 
+            placeholder="Type or paste a quick note/link to send..." 
+          />
+          <button id="send-note-btn" class="btn btn-primary snippet-btn">
+            Send Note
+          </button>
+        </div>
+      </div>
+
+      <!-- Drop Prompt Box -->
+      <div class="drop-prompt" id="drop-prompt">
+        <div class="drop-prompt-icon">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+          </svg>
+        </div>
+        <p class="drop-prompt-text">Drag & drop files here, or click to browse</p>
+        <p class="drop-prompt-hint">Supports photos, videos, PDFs, ZIPs, docs, text snippets up to 100MB</p>
+      </div>
+    </section>
+
+    <!-- Upload Progress Drawer -->
+    <section class="upload-drawer" id="upload-drawer">
+      <!-- Dynamically populated upload items -->
+    </section>
+
+    <!-- Section Header & Filter -->
+    <div class="section-header">
+      <div style="display:flex;align-items:center;gap:0.75rem;">
+        <h3 class="section-title">Latest Files</h3>
+        <span class="file-count" id="file-count">0 items</span>
+      </div>
+      <button class="btn-icon-only" id="manual-refresh-btn" title="Refresh files">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="width:16px;height:16px;">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Files Grid -->
+    <div class="files-grid" id="files-grid">
+      <!-- Dynamic cards rendered here -->
+      <div class="empty-state" id="empty-state">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+        </svg>
+        <h3>No files in your locker</h3>
+        <p>Drop a file or paste from your clipboard to get started.</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Lightbox / Preview Modal -->
+  <div class="modal-overlay" id="preview-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="preview-filename">File Preview</h4>
+        <button class="modal-close-btn" id="modal-close-btn">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="width:20px;height:20px;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body" id="preview-body">
+        <!-- Rendered preview content (image, text reader, video, audio) -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="modal-copy-btn">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="width:16px;height:16px;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+          </svg>
+          <span id="modal-copy-text">Copy to Clipboard</span>
+        </button>
+        <a id="modal-download-link" class="btn btn-primary" download>
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="width:16px;height:16px;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          <span>Download</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Application Script -->
+  <script src="/app.js"></script>
+</body>
+</html>

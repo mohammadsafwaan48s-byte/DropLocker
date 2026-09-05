@@ -1,0 +1,14 @@
+{
+	"appId": "com.droplocker.app",
+	"appName": "DropLocker",
+	"webDir": "public",
+	"server": {
+		"androidScheme": "https",
+		"cleartext": true
+	},
+	"android": {
+		"allowMixedContent": true,
+		"captureInput": true,
+		"webContentsDebuggingEnabled": false
+	}
+}
